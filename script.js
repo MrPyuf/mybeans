@@ -139,11 +139,50 @@ function showGameOver() {
     context.fillText('GAME OVER!', canvas.width / 2, canvas.height / 2);
 }
 
+// Key state management
+let keyState = {
+    ArrowLeft: false,
+    ArrowRight: false,
+    ArrowDown: false,
+    ArrowUp: false
+};
+
+// Move tetromino with key states
+function moveTetromino() {
+    if (gameOver || isPaused) return;
+
+    if (keyState['ArrowLeft']) {
+        if (isValidMove(tetromino.matrix, tetromino.row, tetromino.col - 1)) {
+            tetromino.col--;
+        }
+    }
+    if (keyState['ArrowRight']) {
+        if (isValidMove(tetromino.matrix, tetromino.row, tetromino.col + 1)) {
+            tetromino.col++;
+        }
+    }
+    if (keyState['ArrowDown']) {
+        if (isValidMove(tetromino.matrix, tetromino.row + 1, tetromino.col)) {
+            tetromino.row++;
+            score++;
+        }
+    }
+    if (keyState['ArrowUp']) {
+        const rotated = rotate(tetromino.matrix);
+        if (isValidMove(rotated, tetromino.row, tetromino.col)) {
+            tetromino.matrix = rotated;
+        }
+    }
+}
+
+// Game loop
 function gameLoop() {
     if (gameOver || isPaused) return;
 
     rAF = requestAnimationFrame(gameLoop);
     context.clearRect(0, 0, canvas.width, canvas.height);
+
+    moveTetromino();  // Handle movement here
 
     // Draw playfield
     for (let row = 0; row < 20; row++) {
@@ -196,20 +235,20 @@ function gameLoop() {
     }
 }
 
-// Game controls
+// Handle keydown events to set key state
 document.addEventListener('keydown', function(e) {
-    if (e.key.toLowerCase() === 'r') {
-        // Reset game
-        playfield.forEach(row => row.fill(0));
-        score = 0;
-        gameOver = false;
-        tetromino = getNextTetromino();
-        rAF = requestAnimationFrame(gameLoop);
+    if (gameOver) {
         return;
     }
 
-    if (gameOver) {
-        return;
+    if (e.key === 'ArrowLeft') {
+        keyState['ArrowLeft'] = true;
+    } else if (e.key === 'ArrowRight') {
+        keyState['ArrowRight'] = true;
+    } else if (e.key === 'ArrowDown') {
+        keyState['ArrowDown'] = true;
+    } else if (e.key === 'ArrowUp') {
+        keyState['ArrowUp'] = true;
     }
 
     if (e.key === 'p') {
@@ -228,34 +267,19 @@ document.addEventListener('keydown', function(e) {
             context.textBaseline = 'middle';
             context.fillText('PAUSED', canvas.width / 2, canvas.height / 2);
         }
-        return;
     }
+});
 
-    if (isPaused) return;
-
-    switch(e.key) {
-        case 'ArrowLeft':
-            if (isValidMove(tetromino.matrix, tetromino.row, tetromino.col - 1)) {
-                tetromino.col--;
-            }
-            break;
-        case 'ArrowRight':
-            if (isValidMove(tetromino.matrix, tetromino.row, tetromino.col + 1)) {
-                tetromino.col++;
-            }
-            break;
-        case 'ArrowDown':
-            if (isValidMove(tetromino.matrix, tetromino.row + 1, tetromino.col)) {
-                tetromino.row++;
-                score++;
-            }
-            break;
-        case 'ArrowUp':
-            const rotated = rotate(tetromino.matrix);
-            if (isValidMove(rotated, tetromino.row, tetromino.col)) {
-                tetromino.matrix = rotated;
-            }
-            break;
+// Handle keyup events to stop key movement
+document.addEventListener('keyup', function(e) {
+    if (e.key === 'ArrowLeft') {
+        keyState['ArrowLeft'] = false;
+    } else if (e.key === 'ArrowRight') {
+        keyState['ArrowRight'] = false;
+    } else if (e.key === 'ArrowDown') {
+        keyState['ArrowDown'] = false;
+    } else if (e.key === 'ArrowUp') {
+        keyState['ArrowUp'] = false;
     }
 });
 
